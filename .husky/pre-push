@@ -9,7 +9,7 @@ if [ $? -ne 0 ]; then
 fi
 echo "✅ Tests completed."
 
-echo "🏗️ Building the project..."
+echo "🔨 Building the project..."
 npm run build
 if [ $? -ne 0 ]; then
   echo "❌ Build failed"
