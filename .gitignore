@@ -11,7 +11,7 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
-docker/var_lib_mysql/
+
 # OS
 .DS_Store
 
@@ -52,11 +52,17 @@ pids
 *.seed
 *.pid.lock
 
-# Diagnostic reports (https://nodejs.org/api/report.html)
+# Diagnostic reports
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-**/spicedb/var_lib_mysql
+# Database
+/data
+/postgres_data
+**/var_lib_mysql
+**/var_lib_postgresql
 
-
+# Certificates
 ./certs
+ 
+# vscode
 .vscode
