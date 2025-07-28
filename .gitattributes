@@ -1,0 +1,10 @@
+# Set default behavior to automatically normalize line endings.
+* text=auto
+
+# Explicitly declare text files you want to always be normalized and converted to native line endings.
+*.ts text
+*.json text
+*.md text
+*.js text
+*.mjs text
+*.env  text

@@ -1,0 +1,41 @@
+services: 
+  linkTorch-postgres:
+    image: postgres:15-alpine
+    container_name: linktorch_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data 
+   
+  linkTorch-auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: linktorch_app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT}:3000"
+    environment:
+      - NODE_ENV=development
+      - APP_PORT=${APP_PORT}
+      - DB_TYPE=${DB_TYPE}
+      - DB_HOST=linkTorch-postgres
+      - DB_PORT=${DB_PORT}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_DATABASE=${DB_DATABASE}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+    depends_on:
+      - linkTorch-postgres 
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data: 

@@ -1,0 +1,24 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+ 
+
+echo "🧹 Running linting and formatting checks..."
+
+npm run lint
+if [ $? -ne 0 ]; then
+  echo "❌ Linting failed"
+  exit 1
+fi
+echo "✅ Linting checks passed."
+
+echo "✨ Running code formatting..."
+npm run format || echo "⚠️ Some files not found for formatting, continuing..."
+echo "✅ Code formatting completed."
+
+echo "🧪 Running tests..."
+npm run test
+if [ $? -ne 0 ]; then
+  echo "❌ Tests failed"
+  exit 1
+fi
+echo "✅ All checks passed."
