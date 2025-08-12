@@ -1,4 +1,16 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-npx lint-staged
+# Check if only .env* files are staged
+ENV_FILES_ONLY=true
+for file in $(git diff --cached --name-only); do
+  if [[ $file != .env* ]]; then
+    ENV_FILES_ONLY=false
+    break
+  fi
+done
+
+# Run lint-staged only if there are non-.env files
+if [ "$ENV_FILES_ONLY" = false ]; then
+  npx lint-staged
+fi
