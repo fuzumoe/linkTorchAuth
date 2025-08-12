@@ -1,2 +1,4 @@
-export { databaseConfig } from './database.config';
-export { typeOrmConfig } from './typeorm.config';
+import databaseConfig from './database.config';
+import { typeOrmConfig } from './typeorm.config';
+
+export { databaseConfig, typeOrmConfig };
