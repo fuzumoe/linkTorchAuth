@@ -4,4 +4,4 @@
 
 echo "📝 Validating commit message format..."
 npx --no -- commitlint --edit ${1}
-echo "✅ Commit message format is valid."
+echo "✅ Commit message format is valid."npx --no -- commitlint --edit $1

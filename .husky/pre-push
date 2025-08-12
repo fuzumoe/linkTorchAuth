@@ -17,4 +17,4 @@ if [ $? -ne 0 ]; then
 fi
 echo "✅ Build completed."
 
-echo "🎉 All pre-push checks passed! Ready to push."
+echo "🎉 All pre-push checks passed! Ready to push."npm run test
