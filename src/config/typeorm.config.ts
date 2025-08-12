@@ -1,14 +1,6 @@
+import { DatabaseConfig } from '@auth/interfaces/database.interface';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-
-// Define the database config interface to match the structure from database.config.ts
-interface DatabaseConfig {
-    host: string;
-    port: number;
-    username: string;
-    password: string;
-    database: string;
-}
 
 export const typeOrmConfig = (configService: ConfigService): TypeOrmModuleOptions => {
     const dbConfig = configService.get<DatabaseConfig>('database');
@@ -18,7 +10,7 @@ export const typeOrmConfig = (configService: ConfigService): TypeOrmModuleOption
     }
 
     return {
-        type: 'postgres',
+        type: dbConfig.type,
         host: dbConfig.host,
         port: dbConfig.port,
         username: dbConfig.username,
@@ -27,5 +19,5 @@ export const typeOrmConfig = (configService: ConfigService): TypeOrmModuleOption
         entities: [process.cwd() + '/dist/**/*.entity.js'],
         migrations: [process.cwd() + '/dist/migrations/*.js'],
         migrationsTableName: 'migrations',
-    };
+    } as TypeOrmModuleOptions;
 };
