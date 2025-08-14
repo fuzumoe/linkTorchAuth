@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from '../../../src/entities/user.entity';
 import { LocalStrategy } from '../../../src/strategies/local.strategy';
 import { createTestingModule, cleanupTestUsers, createTestUser, getCommonServices } from '../../fixtures/app.fixtures';
+import { UserResponseDto } from '@auth/dtos/user.dto';
 
 describe('LocalStrategy Integration Test', () => {
     let app: TestingModule;
@@ -32,7 +33,7 @@ describe('LocalStrategy Integration Test', () => {
 
     describe('validate', () => {
         it('should successfully validate user with correct credentials', async () => {
-            const result: User = await localStrategy.validate(testEmail, testPassword);
+            const result: UserResponseDto = await localStrategy.validate(testEmail, testPassword);
 
             expect(result).toBeDefined();
             expect(result.email).toBe(testEmail);

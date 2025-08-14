@@ -17,6 +17,9 @@ describe('JwtStrategy', () => {
     };
 
     beforeEach(async () => {
+        // Reset mocks before setup
+        jest.clearAllMocks();
+
         mockConfigService.get.mockImplementation((key) => {
             if (key === 'jwt.secret') {
                 return 'test-secret-key';
@@ -40,7 +43,7 @@ describe('JwtStrategy', () => {
 
         jwtStrategy = moduleRef.get<JwtStrategy>(JwtStrategy);
 
-        jest.clearAllMocks();
+        // Don't clear mocks after setup - that would erase the constructor calls
     });
 
     describe('validate', () => {
@@ -65,6 +68,12 @@ describe('JwtStrategy', () => {
                 email: 'test@example.com',
                 firstName: 'Test',
                 lastName: 'User',
+                avatar: undefined,
+                isEmailVerified: undefined,
+                isActive: undefined,
+                role: undefined,
+                createdAt: undefined,
+                updatedAt: undefined,
             });
         });
 
@@ -108,15 +117,33 @@ describe('JwtStrategy', () => {
 
             expect(result).not.toHaveProperty('password');
             expect(Object.keys(result)).toEqual(
-                expect.arrayContaining(['id', 'email', 'firstName', 'lastName', 'roles', 'createdAt'])
+                expect.arrayContaining([
+                    'id',
+                    'email',
+                    'firstName',
+                    'lastName',
+                    'avatar',
+                    'isEmailVerified',
+                    'isActive',
+                    'role',
+                    'createdAt',
+                    'updatedAt',
+                ])
             );
         });
     });
 
     describe('constructor configuration', () => {
         it('should set up the strategy correctly', () => {
+            // Just verify the strategy was created successfully
             expect(jwtStrategy).toBeDefined();
-            expect(mockUserService.findById).toHaveBeenCalledWith('test-user-id');
+
+            // Verify that config service was used to get the secret during instantiation
+            expect(mockConfigService.get).toHaveBeenCalledWith('jwt.secret');
+
+            // Add test to validate JWT extraction method is configured
+            // We can't directly access JwtStrategy's options, but we can verify it's properly instantiated
+            // by testing its behavior in previous tests
         });
     });
 });

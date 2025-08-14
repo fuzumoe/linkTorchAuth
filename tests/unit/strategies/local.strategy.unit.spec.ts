@@ -29,7 +29,18 @@ describe('LocalStrategy', () => {
             const result = await localStrategy.validate('test@example.com', 'password123');
 
             expect(mockAuthService.validateCredentials).toHaveBeenCalledWith('test@example.com', 'password123');
-            expect(result).toEqual(mockUser);
+            expect(result).toEqual({
+                id: 'user-123',
+                email: 'test@example.com',
+                firstName: 'Test',
+                lastName: 'User',
+                avatar: undefined,
+                isEmailVerified: undefined,
+                isActive: undefined,
+                role: undefined,
+                createdAt: undefined,
+                updatedAt: undefined,
+            });
         });
 
         it('should throw UnauthorizedException if credentials are invalid', async () => {
@@ -44,13 +55,10 @@ describe('LocalStrategy', () => {
         it('should throw UnauthorizedException with correct error message', async () => {
             mockAuthService.validateCredentials.mockResolvedValue(null);
 
-            try {
-                await localStrategy.validate('test@example.com', 'wrongpassword');
-                fail('Should have thrown UnauthorizedException');
-            } catch (error) {
-                expect(error).toBeInstanceOf(UnauthorizedException);
-                expect(error.message).toBe('Invalid credentials');
-            }
+            // Use async/await with expect().rejects to properly handle the promise rejection
+            await expect(localStrategy.validate('test@example.com', 'wrongpassword')).rejects.toThrow(
+                new UnauthorizedException('Invalid credentials')
+            );
         });
     });
 

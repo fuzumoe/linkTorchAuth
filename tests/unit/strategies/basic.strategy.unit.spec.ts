@@ -28,11 +28,18 @@ describe('BasicStrategy', () => {
             const result = await basicStrategy.validate('test@example.com', 'password123');
 
             expect(mockAuthService.validateCredentials).toHaveBeenCalledWith('test@example.com', 'password123');
+            // With @Expose() decorators, the plainToInstance transformation now retains the values
             expect(result).toEqual({
                 id: 'user-123',
                 email: 'test@example.com',
                 firstName: 'Test',
                 lastName: 'User',
+                avatar: undefined,
+                isEmailVerified: undefined,
+                isActive: undefined,
+                role: undefined,
+                createdAt: undefined,
+                updatedAt: undefined,
             });
         });
 
@@ -73,7 +80,18 @@ describe('BasicStrategy', () => {
 
             expect(result).not.toHaveProperty('password');
             expect(Object.keys(result)).toEqual(
-                expect.arrayContaining(['id', 'email', 'firstName', 'lastName', 'roles', 'createdAt'])
+                expect.arrayContaining([
+                    'id',
+                    'email',
+                    'firstName',
+                    'lastName',
+                    'avatar',
+                    'isEmailVerified',
+                    'isActive',
+                    'role',
+                    'createdAt',
+                    'updatedAt',
+                ])
             );
         });
     });

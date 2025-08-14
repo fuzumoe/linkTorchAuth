@@ -2,7 +2,8 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-local';
 import { AuthService } from '../services/auth.service';
-import { User } from '@auth/entities/user.entity';
+import { UserResponseDto } from '../dtos/user.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
@@ -13,13 +14,17 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
         });
     }
 
-    async validate(email: string, password: string): Promise<User> {
+    async validate(email: string, password: string): Promise<UserResponseDto> {
         const user = await this.authService.validateCredentials(email, password);
 
         if (!user) {
             throw new UnauthorizedException('Invalid credentials');
         }
 
-        return user;
+        const userResponse: UserResponseDto = plainToInstance(UserResponseDto, user, {
+            excludeExtraneousValues: true,
+        });
+
+        return userResponse;
     }
 }
