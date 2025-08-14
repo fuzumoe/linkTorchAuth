@@ -1,18 +1,17 @@
 {
     "moduleFileExtensions": ["js", "json", "ts"],
     "rootDir": "../",
-    "testRegex": ".*\\.e2e\\.spec\\.ts$",
-    "maxWorkers": 1,
+    "testMatch": ["**/tests/integration/**/*.spec.ts"],
     "transform": {
         "^.+\\.(t|j)s$": "ts-jest"
     },
-    "moduleNameMapper": {
-        "^@authz/(.*)$": "<rootDir>/src/$1"
-    },
-    "testPathIgnorePatterns": ["tilt.commands.e2e.spec.ts"],
     "collectCoverageFrom": ["**/*.(t|j)s"],
     "coverageDirectory": "./coverage",
     "testEnvironment": "node",
+    "moduleNameMapper": {
+        "^@authz/(.*)$": "<rootDir>/src/$1"
+    },
+    "maxWorkers": "50%",
     "forceExit": true,
     "detectOpenHandles": true
 }
