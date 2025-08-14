@@ -5,8 +5,6 @@ import { User } from '../entities/user.entity';
 import { PasswordService } from './password.service';
 import { SearchUserDto } from '@auth/dtos/user.dto';
 
-// Define interface for user search parameters
-
 @Injectable()
 export class UserService {
     private readonly logger = new Logger(UserService.name);
@@ -18,47 +16,93 @@ export class UserService {
     ) {}
 
     async findByEmail(email: string): Promise<User | null> {
-        return this.userRepository.findOne({ where: { email } });
+        this.logger.log(`Finding user by email: ${email}`);
+        const user = await this.userRepository.findOne({ where: { email } });
+        if (!user) {
+            this.logger.log(`No user found with email: ${email}`);
+        } else {
+            this.logger.log(`User found with email: ${email}`);
+        }
+        return user;
     }
 
     async findById(id: string): Promise<User | null> {
-        return this.userRepository.findOne({ where: { id } });
+        this.logger.log(`Finding user by ID: ${id}`);
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) {
+            this.logger.log(`No user found with ID: ${id}`);
+        } else {
+            this.logger.log(`User found with ID: ${id}`);
+        }
+        return user;
     }
 
     async create(userData: Partial<User>): Promise<User> {
+        this.logger.log(`Creating new user with email: ${userData.email}`);
         const data: Partial<User> = { ...userData };
 
         if (data.password) {
+            this.logger.log('Hashing password for new user');
             data.password = await this.passwordService.hashPassword(data.password);
         } else {
+            this.logger.log('No password provided for new user');
             data.password = undefined;
         }
 
         const user = this.userRepository.create(data);
-        return this.userRepository.save(user);
+        const savedUser = await this.userRepository.save(user);
+        this.logger.log(`User created successfully with ID: ${savedUser.id}`);
+        return savedUser;
     }
 
     async update(id: string, userData: Partial<User>): Promise<User | null> {
+        this.logger.log(`Updating user with ID: ${id}`);
+        this.logger.log(
+            `Update data: ${JSON.stringify(userData, (key: string, value: string) => (key === 'password' ? '[REDACTED]' : value))}`
+        );
+
         const data: Partial<User> = { ...userData };
 
         if (data.password && !this.passwordService.isPasswordHashed(data.password)) {
+            this.logger.log('Hashing password for user update');
             data.password = await this.passwordService.hashPassword(data.password);
         }
 
-        await this.userRepository.update(id, data);
+        const result = await this.userRepository.update(id, data);
+        if (result.affected === 0) {
+            this.logger.warn(`Update failed: User with ID ${id} not found`);
+        } else {
+            this.logger.log(`User updated successfully: ${id}`);
+        }
+
         return this.findById(id);
     }
 
     async delete(id: string): Promise<boolean> {
+        this.logger.log(`Deleting user with ID: ${id}`);
         const result = await this.userRepository.delete(id);
-        return result.affected !== null && result.affected !== undefined && result.affected > 0;
+        const success = result.affected !== null && result.affected !== undefined && result.affected > 0;
+
+        if (success) {
+            this.logger.log(`User deleted successfully: ${id}`);
+        } else {
+            this.logger.warn(`Delete failed: User with ID ${id} not found`);
+        }
+
+        return success;
     }
 
     async countUsers(): Promise<number> {
-        return this.userRepository.count();
+        this.logger.log('Counting all users');
+        const count = await this.userRepository.count();
+        this.logger.log(`Total user count: ${count}`);
+        return count;
     }
 
     async findUsers(searchParams: SearchUserDto): Promise<[User[], number]> {
+        this.logger.log('Searching users with criteria');
+        this.logger.log(`Search params: ${JSON.stringify(searchParams)}`);
+
         const {
             page = 1,
             limit = 100,
@@ -115,6 +159,12 @@ export class UserService {
         queryBuilder.skip(validSkip);
         queryBuilder.take(validLimit);
 
-        return queryBuilder.getManyAndCount();
+        this.logger.log(
+            `Executing query with skip: ${validSkip}, limit: ${validLimit}, sortBy: ${validSortBy}, sortDirection: ${validSortDirection}`
+        );
+        const [users, count] = await queryBuilder.getManyAndCount();
+        this.logger.log(`Found ${count} users, returning ${users.length} for page ${pageNum}`);
+
+        return [users, count];
     }
 }

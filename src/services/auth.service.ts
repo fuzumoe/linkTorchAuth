@@ -13,10 +13,12 @@ import { EmailVerification } from '../entities/email-verification.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { UserResponseDto } from '../dtos/user.dto';
 import { plainToInstance } from 'class-transformer';
+import { JwtConfig } from '@auth/interfaces/jwt.interface';
 
 @Injectable()
 export class AuthService {
     private readonly logger = new Logger(AuthService.name);
+    private readonly jwtConfig: JwtConfig | undefined;
 
     constructor(
         private readonly userService: UserService,
@@ -29,40 +31,62 @@ export class AuthService {
         private readonly passwordResetRepository: Repository<PasswordReset>,
         @InjectRepository(EmailVerification)
         private readonly emailVerificationRepository: Repository<EmailVerification>
-    ) {}
+    ) {
+        this.jwtConfig = this.configService.get<JwtConfig>('jwt');
+    }
 
     async validateCredentials(email: string, password: string): Promise<User | null> {
+        this.logger.log(`Validating credentials for user: ${email}`);
+
         const user = await this.userService.findByEmail(email);
-        if (!user) return null;
+        if (!user) {
+            this.logger.log(`Authentication failed: user not found - ${email}`);
+            return null;
+        }
 
         const isPasswordValid = await this.passwordService.comparePasswords(password, user.password);
+
+        if (isPasswordValid) {
+            this.logger.log(`User authenticated successfully: ${email}`);
+        } else {
+            this.logger.log(`Authentication failed: invalid password - ${email}`);
+        }
+
         return isPasswordValid ? user : null;
     }
 
     async login(user: User, ipAddress: string, deviceInfo: string, response: Response) {
+        this.logger.log(`User login: ${user.email} from IP ${ipAddress} using ${deviceInfo}`);
+
+        this.logger.log(`Updating last login time for user: ${user.id}`);
         await this.userService.update(user.id, {
             lastLoginAt: new Date(),
         });
 
         const payload = { sub: user.id };
         const jwtExpiresIn: string = this.configService.get('jwt.expiresIn') || '1h';
+        this.logger.log(`Generating JWT token with expiration: ${jwtExpiresIn}`);
+
         const accessToken = this.jwtService.sign(payload, {
             expiresIn: jwtExpiresIn,
         });
 
         if (response) {
+            this.logger.log('Setting Authorization header and access_token cookie');
             response.setHeader('Authorization', `Bearer ${accessToken}`);
 
-            const jwtExpiresIn: string = this.configService.get('jwt.expiresIn') || '1h';
-
+            const jwtExpiresIn: string = this.jwtConfig?.expiresIn || '1h';
             const expiresInMs = this.parseJwtExpiresIn(jwtExpiresIn);
 
+            this.logger.log(`Setting access_token cookie with expiration: ${expiresInMs}ms`);
             response.cookie('access_token', accessToken, {
                 httpOnly: true,
                 secure: this.configService.get('app.isProduction'),
                 sameSite: 'strict',
                 maxAge: expiresInMs,
             });
+        } else {
+            this.logger.log('No response object provided, skipping header and cookie setup');
         }
 
         return {
@@ -77,9 +101,13 @@ export class AuthService {
         ipAddress?: string,
         response?: Response
     ): Promise<string> {
+        this.logger.log(`Creating refresh token for user: ${userId}`);
+
         const token = uuidv4();
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30);
+
+        this.logger.log(`Refresh token will expire on: ${expiresAt.toISOString()}`);
 
         const refreshToken = this.refreshTokenRepository.create({
             userId,
@@ -89,7 +117,16 @@ export class AuthService {
             ipAddress,
         });
 
-        await this.refreshTokenRepository.save(refreshToken);
+        try {
+            await this.refreshTokenRepository.save(refreshToken);
+            this.logger.log(`Refresh token saved successfully for user: ${userId}`);
+        } catch (error) {
+            this.logger.error(
+                `Failed to save refresh token for user: ${userId}`,
+                error instanceof Error ? error.stack : String(error)
+            );
+            throw error;
+        }
 
         if (response) {
             const refreshTokenExpiresIn: string = this.configService.get('REFRESH_TOKEN_EXPIRES_IN') || '30d';

@@ -24,7 +24,7 @@ describe('PasswordService', () => {
         passwordService = module.get<PasswordService>(PasswordService);
 
         // Spy on the logger
-        loggerSpy = jest.spyOn(Logger.prototype, 'debug').mockImplementation();
+        loggerSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation();
 
         // Clear mocks before each test
         jest.clearAllMocks();
@@ -53,6 +53,7 @@ describe('PasswordService', () => {
             expect(bcrypt.hash).toHaveBeenCalledWith(password, salt);
             expect(result).toBe(hashedPassword);
             expect(loggerSpy).toHaveBeenCalledWith('Hashing password');
+            expect(loggerSpy).toHaveBeenCalledWith('Password hashed successfully');
         });
 
         it('should handle password hashing errors', async () => {
@@ -84,6 +85,8 @@ describe('PasswordService', () => {
             // Assert
             expect(result).toBe(true);
             expect(bcrypt.compare).toHaveBeenCalledWith(plainPassword, hashedPassword);
+            expect(loggerSpy).toHaveBeenCalledWith('Comparing passwords');
+            expect(loggerSpy).toHaveBeenCalledWith('Password comparison result: matched');
         });
 
         it('should return false when passwords do not match', async () => {
@@ -100,6 +103,8 @@ describe('PasswordService', () => {
             // Assert
             expect(result).toBe(false);
             expect(bcrypt.compare).toHaveBeenCalledWith(plainPassword, hashedPassword);
+            expect(loggerSpy).toHaveBeenCalledWith('Comparing passwords');
+            expect(loggerSpy).toHaveBeenCalledWith('Password comparison result: does not match');
         });
 
         it('should handle comparison errors', async () => {
@@ -113,6 +118,7 @@ describe('PasswordService', () => {
 
             // Act & Assert
             await expect(passwordService.comparePasswords(plainPassword, hashedPassword)).rejects.toThrow(error);
+            expect(loggerSpy).toHaveBeenCalledWith('Comparing passwords');
         });
     });
 
