@@ -1,18 +1,17 @@
-import { Injectable, Logger, UnauthorizedException, BadRequestException, Inject } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Response } from 'express';
 import { User } from '../entities/user.entity';
-import appConfig from '../config/app.config';
 import { UserService } from './user.service';
 import { PasswordService } from './password.service';
 import { RefreshToken } from '../entities/refresh-token.entity';
 import { PasswordReset } from '../entities/password-reset.entity';
 import { EmailVerification } from '../entities/email-verification.entity';
 import { v4 as uuidv4 } from 'uuid';
-import { UserResponseDto } from '@auth/dtos/user.dto';
+import { UserResponseDto } from '../dtos/user.dto';
 import { plainToInstance } from 'class-transformer';
 
 @Injectable()
@@ -24,8 +23,6 @@ export class AuthService {
         private readonly passwordService: PasswordService,
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService,
-        @Inject(appConfig.KEY)
-        private readonly appConfig: any,
         @InjectRepository(RefreshToken)
         private readonly refreshTokenRepository: Repository<RefreshToken>,
         @InjectRepository(PasswordReset)
@@ -48,7 +45,7 @@ export class AuthService {
         });
 
         const payload = { sub: user.id };
-        const jwtExpiresIn: string = this.configService.get('JWT_EXPIRES_IN') || '1h';
+        const jwtExpiresIn: string = this.configService.get('jwt.expiresIn') || '1h';
         const accessToken = this.jwtService.sign(payload, {
             expiresIn: jwtExpiresIn,
         });
@@ -56,13 +53,13 @@ export class AuthService {
         if (response) {
             response.setHeader('Authorization', `Bearer ${accessToken}`);
 
-            const jwtExpiresIn: string = this.configService.get('JWT_EXPIRES_IN') || '1h';
+            const jwtExpiresIn: string = this.configService.get('jwt.expiresIn') || '1h';
 
             const expiresInMs = this.parseJwtExpiresIn(jwtExpiresIn);
 
             response.cookie('access_token', accessToken, {
                 httpOnly: true,
-                secure: this.appConfig.isProduction as boolean,
+                secure: this.configService.get('app.isProduction'),
                 sameSite: 'strict',
                 maxAge: expiresInMs,
             });
@@ -100,7 +97,7 @@ export class AuthService {
 
             response.cookie('refresh_token', token, {
                 httpOnly: true,
-                secure: this.configService.get('NODE_ENV') === 'production',
+                secure: this.configService.get('app.isProduction'),
                 sameSite: 'strict',
                 maxAge,
             });

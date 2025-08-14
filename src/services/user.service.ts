@@ -3,6 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { PasswordService } from './password.service';
+import { SearchUserDto } from '@auth/dtos/user.dto';
+
+// Define interface for user search parameters
 
 @Injectable()
 export class UserService {
@@ -23,13 +26,11 @@ export class UserService {
     }
 
     async create(userData: Partial<User>): Promise<User> {
-        // Avoid mutating caller's object
         const data: Partial<User> = { ...userData };
 
         if (data.password) {
             data.password = await this.passwordService.hashPassword(data.password);
         } else {
-            // Keep undefined when not provided so the optional column remains unset
             data.password = undefined;
         }
 
@@ -38,7 +39,6 @@ export class UserService {
     }
 
     async update(id: string, userData: Partial<User>): Promise<User | null> {
-        // Avoid mutating caller's object
         const data: Partial<User> = { ...userData };
 
         if (data.password && !this.passwordService.isPasswordHashed(data.password)) {
@@ -58,7 +58,7 @@ export class UserService {
         return this.userRepository.count();
     }
 
-    async findUsers(searchParams: any): Promise<[User[], number]> {
+    async findUsers(searchParams: SearchUserDto): Promise<[User[], number]> {
         const {
             page = 1,
             limit = 100,
@@ -70,22 +70,27 @@ export class UserService {
             role,
             sortBy = 'createdAt',
             sortDirection = 'DESC',
-        } = searchParams;
+        }: SearchUserDto = searchParams;
 
-        const skip = (page - 1) * limit;
+        const pageNum: number = typeof page === 'number' ? page : 1;
+        const limitNum: number = typeof limit === 'number' ? limit : 100;
+        const skip: number = (pageNum - 1) * limitNum;
 
         const queryBuilder = this.userRepository.createQueryBuilder('user');
 
-        if (email) {
-            queryBuilder.andWhere('user.email LIKE :email', { email: `%${email}%` });
+        if (typeof email === 'string') {
+            const emailPattern: string = `%${email}%`;
+            queryBuilder.andWhere('user.email LIKE :email', { email: emailPattern });
         }
 
-        if (firstName) {
-            queryBuilder.andWhere('user.firstName LIKE :firstName', { firstName: `%${firstName}%` });
+        if (typeof firstName === 'string') {
+            const firstNamePattern: string = `%${firstName}%`;
+            queryBuilder.andWhere('user.firstName LIKE :firstName', { firstName: firstNamePattern });
         }
 
-        if (lastName) {
-            queryBuilder.andWhere('user.lastName LIKE :lastName', { lastName: `%${lastName}%` });
+        if (typeof lastName === 'string') {
+            const lastNamePattern: string = `%${lastName}%`;
+            queryBuilder.andWhere('user.lastName LIKE :lastName', { lastName: lastNamePattern });
         }
 
         if (isActive !== undefined) {
@@ -96,14 +101,19 @@ export class UserService {
             queryBuilder.andWhere('user.isEmailVerified = :isEmailVerified', { isEmailVerified });
         }
 
-        if (role) {
+        if (typeof role === 'string') {
             queryBuilder.andWhere('user.role = :role', { role });
         }
+        const validSortBy: string = sortBy && typeof sortBy === 'string' ? sortBy : 'createdAt';
+        const validSortDirection: 'ASC' | 'DESC' = sortDirection === 'ASC' ? 'ASC' : 'DESC';
 
-        queryBuilder.orderBy(`user.${sortBy}`, sortDirection);
+        queryBuilder.orderBy(`user.${validSortBy}`, validSortDirection);
 
-        queryBuilder.skip(skip);
-        queryBuilder.take(limit);
+        const validSkip = typeof skip === 'number' ? skip : 0;
+        const validLimit = typeof limit === 'number' ? limit : 10;
+
+        queryBuilder.skip(validSkip);
+        queryBuilder.take(validLimit);
 
         return queryBuilder.getManyAndCount();
     }

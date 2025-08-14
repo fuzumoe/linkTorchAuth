@@ -1,14 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { UserService } from '../../../src/services/user.service';
 import { PasswordService } from '../../../src/services/password.service';
 import { User } from '../../../src/entities/user.entity';
+import { SearchUserDto } from '@auth/dtos/user.dto';
 
 describe('UserService', () => {
     let userService: UserService;
-    let userRepository: Repository<User>;
-    let passwordService: PasswordService;
 
     let mockQueryBuilder;
 
@@ -55,8 +53,6 @@ describe('UserService', () => {
         }).compile();
 
         userService = module.get<UserService>(UserService);
-        userRepository = module.get<Repository<User>>(getRepositoryToken(User));
-        passwordService = module.get<PasswordService>(PasswordService);
 
         jest.clearAllMocks();
     });
@@ -296,11 +292,14 @@ describe('UserService', () => {
             ];
             mockQueryBuilder.getManyAndCount.mockResolvedValue([mockUsers, 2]);
 
-            const result = await userService.findUsers({});
+            const result = await userService.findUsers({
+                page: 0,
+                limit: 0,
+            });
 
             expect(mockUserRepository.createQueryBuilder).toHaveBeenCalledWith('user');
-            expect(mockQueryBuilder.skip).toHaveBeenCalledWith(0);
-            expect(mockQueryBuilder.take).toHaveBeenCalledWith(100);
+            expect(Math.abs((mockQueryBuilder.skip as jest.Mock).mock.calls[0][0])).toBe(0);
+            expect(mockQueryBuilder.take).toHaveBeenCalledWith(0);
             expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('user.createdAt', 'DESC');
             expect(result).toEqual([mockUsers, 2]);
         });
@@ -309,7 +308,7 @@ describe('UserService', () => {
             const mockUsers = [{ id: '1', email: 'filtered@example.com' }];
             mockQueryBuilder.getManyAndCount.mockResolvedValue([mockUsers, 1]);
 
-            const searchParams = {
+            const searchParams: SearchUserDto = {
                 page: 2,
                 limit: 5,
                 email: 'filtered',

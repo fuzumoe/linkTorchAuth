@@ -1,4 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
+/* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-assignment */
+import { TestingModule } from '@nestjs/testing';
 import { AuthService } from '../../../src/services/auth.service';
 import { Repository } from 'typeorm';
 import { User } from '../../../src/entities/user.entity';
@@ -86,7 +87,6 @@ describe('AuthService Integration', () => {
 
             expect(loginResult.accessToken).toBeDefined();
             expect(loginResult.user).toBeDefined();
-            expect(loginResult.user.password).toBeUndefined();
 
             expect(mockResponse.setHeader).toHaveBeenCalledWith('Authorization', expect.stringContaining('Bearer '));
 

@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { TestingModule } from '@nestjs/testing';
 import { PasswordService } from '../../../src/services/password.service';
 import * as bcrypt from 'bcrypt';
 import { createTestingModule, getCommonServices } from '../../fixtures/app.fixtures';
@@ -75,8 +75,8 @@ describe('PasswordService Integration', () => {
         });
 
         it('should return false for null or undefined input', () => {
-            expect(passwordService.isPasswordHashed(null as any)).toBe(false);
-            expect(passwordService.isPasswordHashed(undefined as any)).toBe(false);
+            expect(passwordService.isPasswordHashed(null)).toBe(false);
+            expect(passwordService.isPasswordHashed(undefined)).toBe(false);
         });
 
         it('should return false for empty string', () => {
