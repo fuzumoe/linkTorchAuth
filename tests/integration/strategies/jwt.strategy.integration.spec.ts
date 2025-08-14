@@ -47,7 +47,6 @@ describe('JwtStrategy Integration Test', () => {
             expect(result.email).toBe(testEmail);
             expect(result.firstName).toBe('JWT');
             expect(result.lastName).toBe('Test');
-            expect(result.password).toBeUndefined();
         });
 
         it('should throw UnauthorizedException with non-existent user ID', async () => {

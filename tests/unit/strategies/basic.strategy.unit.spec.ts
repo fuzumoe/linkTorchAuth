@@ -9,10 +9,8 @@ describe('BasicStrategy', () => {
     };
 
     beforeEach(() => {
-        // Direct instantiation with the mock service
         basicStrategy = new BasicStrategy(mockAuthService as unknown as AuthService);
 
-        // Clear all mocks before each test
         jest.clearAllMocks();
     });
 
