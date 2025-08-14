@@ -1,6 +1,6 @@
 import { Injectable, Logger, UnauthorizedException, BadRequestException, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService, ConfigType } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Response } from 'express';
@@ -12,6 +12,8 @@ import { RefreshToken } from '../entities/refresh-token.entity';
 import { PasswordReset } from '../entities/password-reset.entity';
 import { EmailVerification } from '../entities/email-verification.entity';
 import { v4 as uuidv4 } from 'uuid';
+import { UserResponseDto } from '@auth/dtos/user.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class AuthService {
@@ -46,7 +48,7 @@ export class AuthService {
         });
 
         const payload = { sub: user.id };
-        const jwtExpiresIn = this.configService.get('JWT_EXPIRES_IN') || '1h';
+        const jwtExpiresIn: string = this.configService.get('JWT_EXPIRES_IN') || '1h';
         const accessToken = this.jwtService.sign(payload, {
             expiresIn: jwtExpiresIn,
         });
@@ -54,13 +56,13 @@ export class AuthService {
         if (response) {
             response.setHeader('Authorization', `Bearer ${accessToken}`);
 
-            const jwtExpiresIn = this.configService.get('JWT_EXPIRES_IN') || '1h';
+            const jwtExpiresIn: string = this.configService.get('JWT_EXPIRES_IN') || '1h';
 
             const expiresInMs = this.parseJwtExpiresIn(jwtExpiresIn);
 
             response.cookie('access_token', accessToken, {
                 httpOnly: true,
-                secure: this.appConfig.isProduction,
+                secure: this.appConfig.isProduction as boolean,
                 sameSite: 'strict',
                 maxAge: expiresInMs,
             });
@@ -93,7 +95,7 @@ export class AuthService {
         await this.refreshTokenRepository.save(refreshToken);
 
         if (response) {
-            const refreshTokenExpiresIn = this.configService.get('REFRESH_TOKEN_EXPIRES_IN') || '30d';
+            const refreshTokenExpiresIn: string = this.configService.get('REFRESH_TOKEN_EXPIRES_IN') || '30d';
             const maxAge = this.parseJwtExpiresIn(refreshTokenExpiresIn);
 
             response.cookie('refresh_token', token, {
@@ -236,9 +238,12 @@ export class AuthService {
         return true;
     }
 
-    private sanitizeUser(user: User): Partial<User> {
-        const { password, ...userData } = user as any;
-        return userData;
+    private sanitizeUser(user: User): Partial<UserResponseDto> {
+        const userResponse: UserResponseDto = plainToInstance(UserResponseDto, user, {
+            excludeExtraneousValues: true,
+        });
+
+        return userResponse;
     }
 
     private parseJwtExpiresIn(expiresIn: string): number {
