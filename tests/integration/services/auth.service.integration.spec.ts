@@ -215,7 +215,7 @@ describe('AuthService Integration', () => {
 
             const result = await authService.resetPassword(token, newPassword);
 
-            expect(result).toBe(true);
+            expect(result).toEqual({ success: true, message: 'Password reset successfully' });
 
             const validatedUser = await authService.validateCredentials(testEmail, newPassword);
             expect(validatedUser).not.toBeNull();
@@ -247,7 +247,7 @@ describe('AuthService Integration', () => {
 
             const result = await authService.verifyEmail(token);
 
-            expect(result).toBe(true);
+            expect(result).toEqual({ success: true, message: 'Email verified successfully' });
 
             const verifiedUser = await userRepository.findOne({ where: { id: testUser.id } });
             expect(verifiedUser!.isEmailVerified).toBe(true);
