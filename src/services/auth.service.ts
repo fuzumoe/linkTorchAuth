@@ -1,3 +1,4 @@
+import { SuccessResponseDto } from '@auth/dtos/process.dto';
 import { JwtConfig } from '@auth/interfaces/jwt.interface';
 import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -80,10 +81,11 @@ export class AuthService {
 
             this.logger.log(`Setting access_token cookie with expiration: ${expiresInMs}ms`);
             response.cookie('access_token', accessToken, {
-                httpOnly: true,
-                secure: this.configService.get('app.isProduction'),
-                sameSite: 'strict',
-                maxAge: expiresInMs,
+                path: this.configService.get<string>('app.cookies.path') ?? '/',
+                httpOnly: this.configService.get<boolean>('app.cookies.httpOnly') ?? true,
+                secure: this.configService.get<boolean>('app.cookies.secure') ?? false,
+                sameSite: this.configService.get<'strict' | 'lax' | 'none'>('app.cookies.sameSite') ?? 'strict',
+                maxAge: this.configService.get<number>('app.cookies.accessTokenMaxAge') ?? expiresInMs,
             });
         } else {
             this.logger.log('No response object provided, skipping header and cookie setup');
@@ -133,10 +135,11 @@ export class AuthService {
             const maxAge = this.parseJwtExpiresIn(refreshTokenExpiresIn);
 
             response.cookie('refresh_token', token, {
-                httpOnly: true,
-                secure: this.configService.get('app.isProduction'),
-                sameSite: 'strict',
-                maxAge,
+                path: this.configService.get<string>('app.cookies.path') ?? '/',
+                httpOnly: this.configService.get<boolean>('app.cookies.httpOnly') ?? true,
+                secure: this.configService.get<boolean>('app.cookies.secure') ?? false,
+                sameSite: this.configService.get<'strict' | 'lax' | 'none'>('app.cookies.sameSite') ?? 'strict',
+                maxAge: this.configService.get<number>('app.cookies.refreshTokenMaxAge') ?? maxAge,
             });
         }
 
@@ -162,14 +165,57 @@ export class AuthService {
         return refreshToken.user;
     }
 
-    async revokeRefreshToken(token: string): Promise<boolean> {
+    async revokeRefreshToken(token: string): Promise<SuccessResponseDto> {
         const result = await this.refreshTokenRepository.update({ token }, { isRevoked: true });
 
-        return result.affected !== null && result.affected !== undefined && result.affected > 0;
+        return {
+            success: result.affected !== null && result.affected !== undefined && result.affected > 0,
+        };
     }
 
     async revokeAllUserRefreshTokens(userId: string): Promise<void> {
         await this.refreshTokenRepository.update({ userId }, { isRevoked: true });
+    }
+
+    async logout(
+        userId: string,
+        refreshToken?: string,
+        response?: Response,
+        revokeAll: boolean = false
+    ): Promise<SuccessResponseDto> {
+        this.logger.log(`Logging out user: ${userId}, revokeAll: ${revokeAll}`);
+
+        try {
+            if (refreshToken) {
+                await this.revokeRefreshToken(refreshToken);
+                this.logger.log(`Revoked refresh token for user: ${userId}`);
+            }
+
+            if (revokeAll) {
+                await this.revokeAllUserRefreshTokens(userId);
+                this.logger.log(`Revoked all refresh tokens for user: ${userId}`);
+            }
+
+            if (response) {
+                const cookieOptions = {
+                    path: this.configService.get<string>('app.cookies.path') ?? '/',
+                    httpOnly: this.configService.get<boolean>('app.cookies.httpOnly') ?? true,
+                    secure: this.configService.get<boolean>('app.cookies.secure') ?? false,
+                    sameSite: this.configService.get<'strict' | 'lax' | 'none'>('app.cookies.sameSite') ?? 'strict',
+                };
+
+                response.clearCookie('access_token', cookieOptions);
+                response.clearCookie('refresh_token', cookieOptions);
+                response.clearCookie('authenticated', cookieOptions);
+
+                this.logger.log('Cleared authentication cookies');
+            }
+
+            return { success: true };
+        } catch (error) {
+            this.logger.error(`Failed to logout user: ${userId}`, error instanceof Error ? error.stack : String(error));
+            return { success: false };
+        }
     }
 
     async createPasswordResetToken(email: string): Promise<string> {
@@ -209,7 +255,7 @@ export class AuthService {
         return passwordReset.email;
     }
 
-    async resetPassword(token: string, newPassword: string): Promise<boolean> {
+    async resetPassword(token: string, newPassword: string): Promise<SuccessResponseDto> {
         const email = await this.validatePasswordResetToken(token);
         if (!email) {
             throw new UnauthorizedException('Invalid or expired password reset token');
@@ -226,7 +272,7 @@ export class AuthService {
 
         await this.revokeAllUserRefreshTokens(user.id);
 
-        return true;
+        return { success: true, message: 'Password reset successfully' };
     }
 
     async createEmailVerificationToken(email: string): Promise<string> {
@@ -244,7 +290,7 @@ export class AuthService {
         return token;
     }
 
-    async verifyEmail(token: string): Promise<boolean> {
+    async verifyEmail(token: string): Promise<SuccessResponseDto> {
         const verification = await this.emailVerificationRepository.findOne({
             where: {
                 token,
@@ -269,7 +315,7 @@ export class AuthService {
 
         await this.emailVerificationRepository.update({ token }, { isUsed: true });
 
-        return true;
+        return { success: true, message: 'Email verified successfully' };
     }
 
     private sanitizeUser(user: User): Partial<UserResponseDto> {
