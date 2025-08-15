@@ -9,17 +9,17 @@ export function normalizeIp(ip?: string): string {
     return first;
 }
 
-export function getClientIp(req: Request): string {
-    const xfwd = req.headers['x-forwarded-for'];
+export function getClientIp(request: Request): string {
+    const xfwd = request.headers['x-forwarded-for'];
     if (Array.isArray(xfwd)) return normalizeIp(xfwd[0]);
     if (typeof xfwd === 'string' && xfwd.length > 0) return normalizeIp(xfwd);
 
-    const socketRemoteAddress = req.socket?.remoteAddress;
+    const socketRemoteAddress = request.socket?.remoteAddress;
 
-    const connectionRemoteAddress = req.socket?.remoteAddress;
+    const connectionRemoteAddress = request.socket?.remoteAddress;
 
     return normalizeIp(
-        (req.ip as string) ||
+        (request.ip as string) ||
             (typeof socketRemoteAddress === 'string' ? socketRemoteAddress : undefined) ||
             (typeof connectionRemoteAddress === 'string' ? connectionRemoteAddress : undefined)
     );
