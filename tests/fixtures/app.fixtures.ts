@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Repository, Like } from 'typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { INestApplication } from '@nestjs/common';
 
 import { User } from '../../src/entities/user.entity';
 import { RefreshToken } from '../../src/entities/refresh-token.entity';
@@ -78,7 +79,6 @@ export async function cleanupTestUsers(
             createdUserIds.length = 0;
         }
 
-        // Also delete any test users by email pattern
         await userRepository.delete({
             email: Like(pattern),
         });
@@ -139,4 +139,19 @@ export function getCommonServices(app: TestingModule) {
         userService,
         passwordService,
     };
+}
+
+export async function createTestAppWithControllers(
+    controllers: Array<new (...args: any[]) => any>,
+    providers: Array<{ provide: any; useClass: new (...args: any[]) => any }> = []
+): Promise<INestApplication> {
+    const moduleRef = await Test.createTestingModule({
+        controllers,
+        providers,
+    }).compile();
+
+    const app = moduleRef.createNestApplication();
+    await app.init();
+
+    return app;
 }

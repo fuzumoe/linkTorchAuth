@@ -298,7 +298,9 @@ describe('UserService', () => {
             });
 
             expect(mockUserRepository.createQueryBuilder).toHaveBeenCalledWith('user');
-            expect(Math.abs((mockQueryBuilder.skip as jest.Mock).mock.calls[0][0])).toBe(0);
+            // Add a type assertion to ensure the argument is treated as a number
+            const skipCallArgument = (mockQueryBuilder.skip as jest.Mock).mock.calls[0][0] as number;
+            expect(Math.abs(skipCallArgument)).toBe(0);
             expect(mockQueryBuilder.take).toHaveBeenCalledWith(0);
             expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('user.createdAt', 'DESC');
             expect(result).toEqual([mockUsers, 2]);

@@ -11,4 +11,12 @@ export interface AppConfig {
     openApiUrl: string;
     openApiJsonUrl: string;
     redocUrl: string;
+    cookies: {
+        secure: boolean;
+        accessTokenMaxAge: number;
+        refreshTokenMaxAge: number;
+        sameSite: 'strict' | 'lax' | 'none';
+        path: string;
+        httpOnly: boolean;
+    };
 }
