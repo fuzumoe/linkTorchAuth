@@ -1,25 +1,27 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { Request } from 'express';
 
-export const IpAddress = createParamDecorator((data: unknown, ctx: ExecutionContext): string => {
-    const request = ctx.switchToHttp().getRequest<Request>();
+export const IpAddress = createParamDecorator((_: unknown, executionContext: ExecutionContext): string => {
+    const request = executionContext.switchToHttp().getRequest<Request>();
     return request.ip || '';
 });
 
-export const RequestHeader = createParamDecorator((header: string, ctx: ExecutionContext): string | undefined => {
-    const request = ctx.switchToHttp().getRequest<Request>();
-    const headerValue = request.headers[header?.toLowerCase() || ''];
+export const RequestHeader = createParamDecorator(
+    (header: string, executionContext: ExecutionContext): string | undefined => {
+        const request = executionContext.switchToHttp().getRequest<Request>();
+        const headerValue = request.headers[header?.toLowerCase() || ''];
 
-    if (Array.isArray(headerValue)) {
-        return headerValue[0];
+        if (Array.isArray(headerValue)) {
+            return headerValue[0];
+        }
+
+        return headerValue;
     }
-
-    return headerValue;
-});
+);
 
 export const QueryParam = createParamDecorator(
-    (param: string, ctx: ExecutionContext): string | Record<string, string> | undefined => {
-        const request = ctx.switchToHttp().getRequest<Request>();
+    (param: string, executionContext: ExecutionContext): string | Record<string, string> | undefined => {
+        const request = executionContext.switchToHttp().getRequest<Request>();
         const query = request.query as Record<string, string | string[]>;
 
         if (!param) {
