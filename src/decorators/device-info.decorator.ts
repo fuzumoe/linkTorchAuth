@@ -25,8 +25,8 @@ export function getClientIp(request: Request): string {
     );
 }
 
-export const DeviceInfo = createParamDecorator((_: unknown, ctx: ExecutionContext): string => {
-    const request: Request = ctx.switchToHttp().getRequest();
+export const DeviceInfo = createParamDecorator((_: unknown, executionContext: ExecutionContext): string => {
+    const request: Request = executionContext.switchToHttp().getRequest();
     const ipAddress = getClientIp(request);
     const uaHeader = request.headers['user-agent'];
     const userAgent = typeof uaHeader === 'string' && uaHeader.trim().length > 0 ? uaHeader : '';
@@ -35,8 +35,8 @@ export const DeviceInfo = createParamDecorator((_: unknown, ctx: ExecutionContex
 });
 
 export const DeviceInfoObj = createParamDecorator(
-    (_: unknown, ctx: ExecutionContext): { userAgent?: string; ipAddress: string } => {
-        const request: Request = ctx.switchToHttp().getRequest();
+    (_: unknown, executionContext: ExecutionContext): { userAgent?: string; ipAddress: string } => {
+        const request: Request = executionContext.switchToHttp().getRequest();
         const ipAddress = getClientIp(request);
         const uaHeader = request.headers['user-agent'];
         const userAgent = typeof uaHeader === 'string' && uaHeader.trim().length > 0 ? uaHeader : undefined;
