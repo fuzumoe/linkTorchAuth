@@ -10,7 +10,6 @@ export const RequestHeader = createParamDecorator((header: string, ctx: Executio
     const request = ctx.switchToHttp().getRequest<Request>();
     const headerValue = request.headers[header?.toLowerCase() || ''];
 
-    // Handle both string and string[] cases that can come from headers
     if (Array.isArray(headerValue)) {
         return headerValue[0];
     }

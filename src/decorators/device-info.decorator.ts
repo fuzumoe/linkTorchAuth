@@ -1,9 +1,6 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { Request } from 'express';
 
-/**
- * Normalizes an IP address by handling IPv6 formatted addresses and other edge cases
- */
 export function normalizeIp(ip?: string): string {
     if (!ip) return 'unknown';
     const first = ip.split(',')[0].trim();
@@ -17,14 +14,10 @@ export function getClientIp(req: Request): string {
     if (Array.isArray(xfwd)) return normalizeIp(xfwd[0]);
     if (typeof xfwd === 'string' && xfwd.length > 0) return normalizeIp(xfwd);
 
-    // Safely handle the IP address from different sources with proper type checking
     const socketRemoteAddress = req.socket?.remoteAddress;
-    const connectionRemoteAddress = req.connection?.remoteAddress;
 
     return normalizeIp(
-        (req.ip as string) ||
-            (typeof socketRemoteAddress === 'string' ? socketRemoteAddress : undefined) ||
-            (typeof connectionRemoteAddress === 'string' ? connectionRemoteAddress : undefined)
+        (req.ip as string) || (typeof socketRemoteAddress === 'string' ? socketRemoteAddress : undefined)
     );
 }
 
