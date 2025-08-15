@@ -19,8 +19,12 @@ import { JwtStrategy } from '../../src/strategies/jwt.strategy';
 import { LocalStrategy } from '../../src/strategies/local.strategy';
 import { UserSubscriber } from '../../src/subscribers/user.subscriber';
 
+import request from 'supertest';
+import { App } from 'supertest/types';
 import appConfig from '../../src/config/app.config';
 import databaseConfig from '../../src/config/database.config';
+import { AuthController } from '../../src/controllers/auth.controller';
+import { UserController } from '../../src/controllers/user.controller';
 
 export async function createTestingModule(): Promise<TestingModule> {
     return await Test.createTestingModule({
@@ -64,6 +68,7 @@ export async function createTestingModule(): Promise<TestingModule> {
             JwtStrategy,
             UserSubscriber,
         ],
+        controllers: [AuthController, UserController],
     }).compile();
 }
 
@@ -111,21 +116,16 @@ export async function createTestUser(
     return savedUser;
 }
 
-export function getCommonServices(app: TestingModule) {
-    const dataSource = app.get(getDataSourceToken());
+export function getCommonServices(testingModule: TestingModule) {
+    const dataSource = testingModule.get(getDataSourceToken());
     const userRepository = dataSource.getRepository(User);
-    const authService = app.get(AuthService);
-    const basicStrategy = app.get(BasicStrategy);
-    const localStrategy = app.get(LocalStrategy);
-    const jwtStrategy = app.get(JwtStrategy);
-    const userService = app.get(UserService);
-    const passwordService = app.get(PasswordService);
-    let userSubscriber: UserSubscriber | null = null;
-    try {
-        userSubscriber = app.get(UserSubscriber);
-    } catch {
-        // If UserSubscriber is not available, keep it as null
-    }
+    const authService = testingModule.get(AuthService);
+    const basicStrategy = testingModule.get(BasicStrategy);
+    const localStrategy = testingModule.get(LocalStrategy);
+    const jwtStrategy = testingModule.get(JwtStrategy);
+    const userService = testingModule.get(UserService);
+    const passwordService = testingModule.get(PasswordService);
+    const userSubscriber = testingModule.get(UserSubscriber);
 
     return {
         dataSource,
@@ -154,3 +154,45 @@ export async function createTestAppWithControllers(
 
     return app;
 }
+
+export class TestResponse {
+    statusCode = 200;
+    headers: Record<string, string> = {};
+    cookies: Record<string, { value: string; options?: any }> = {};
+    body: any = null;
+
+    status(code: number): Response {
+        this.statusCode = code;
+        return this as unknown as Response;
+    }
+
+    json(body: unknown): Response {
+        this.body = body;
+        return this as unknown as Response;
+    }
+
+    send(body: unknown): Response {
+        this.body = body;
+        return this as unknown as Response;
+    }
+
+    cookie(name: string, value: string, options?: CookieOptions): Response {
+        this.cookies[name] = { value, options };
+        return this as unknown as Response;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    clearCookie(name: string, options: CookieOptions): Response {
+        delete this.cookies[name];
+        return this as unknown as Response;
+    }
+
+    setHeader(name: string, value: string): Response {
+        this.headers[name] = value;
+        return this as unknown as Response;
+    }
+}
+
+export const safeRequest = (app: INestApplication) => {
+    return request(app.getHttpServer() as unknown as App);
+};

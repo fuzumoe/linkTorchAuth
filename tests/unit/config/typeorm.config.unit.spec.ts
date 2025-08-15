@@ -68,11 +68,10 @@ describe('TypeOrmConfig', () => {
 
         jest.spyOn(configService, 'get').mockReturnValue(mockDbConfig);
 
-        // Store the original function first to avoid lint errors
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        const originalCwd = process.cwd;
+        // Get the current working directory before mocking
+        const originalPath = process.cwd();
 
-        // Replace with mock function
+        // Mock process.cwd
         process.cwd = jest.fn().mockReturnValue('/test/path');
 
         try {
@@ -81,7 +80,8 @@ describe('TypeOrmConfig', () => {
             expect(result.entities).toEqual(['/test/path/dist/**/*.entity.js']);
             expect(result.migrations).toEqual(['/test/path/dist/migrations/*.js']);
         } finally {
-            process.cwd = originalCwd;
+            // Restore original method by creating a new function
+            process.cwd = jest.fn().mockReturnValue(originalPath);
         }
     });
 });

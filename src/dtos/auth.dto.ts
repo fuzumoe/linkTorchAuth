@@ -1,25 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
-
-export class LoginDto {
-    @ApiProperty({ description: 'User email' })
-    @IsEmail()
-    @IsNotEmpty()
-    email: string;
-
-    @ApiProperty({ description: 'User password' })
-    @IsString()
-    @IsNotEmpty()
-    password: string;
-
-    @ApiPropertyOptional({ description: 'Device information', required: false })
-    @IsString()
-    deviceInfo?: string;
-
-    @ApiPropertyOptional({ description: 'Authentication strategy', required: false })
-    @IsString()
-    strategy: 'jwt' | 'basic' = 'jwt';
-}
 
 export class PasswordResetRequestDto {
     @ApiProperty({ description: 'User email' })

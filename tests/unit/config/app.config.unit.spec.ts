@@ -53,7 +53,7 @@ describe('App Configuration', () => {
                 isProduction: false,
                 isDevelopment: true,
                 isTest: false,
-                jwtSecret: undefined,
+                jwtSecret: 'some-secrete',
                 jwtExpiresIn: 86400000, // 1d in ms
                 refreshTokenExpiresIn: 604800000, // 7d in ms
                 cookies: {

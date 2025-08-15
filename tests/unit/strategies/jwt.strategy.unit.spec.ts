@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { JwtStrategy } from '../../../src/strategies/jwt.strategy';
-import { UserService } from '../../../src/services/user.service';
+import { Test, TestingModule } from '@nestjs/testing';
+import appConfig from '../../../src/config/app.config';
 import { JwtPayload } from '../../../src/interfaces/auth.interface';
+import { UserService } from '../../../src/services/user.service';
+import { JwtStrategy } from '../../../src/strategies/jwt.strategy';
 
 describe('JwtStrategy', () => {
     let jwtStrategy: JwtStrategy;
@@ -12,20 +12,15 @@ describe('JwtStrategy', () => {
         findById: jest.fn(),
     };
 
-    const mockConfigService = {
-        get: jest.fn(),
+    // Mock app config values
+    const mockAppConfig = {
+        jwtSecret: 'test-secret-key',
+        jwtExpiresIn: 3600,
     };
 
     beforeEach(async () => {
         // Reset mocks before setup
         jest.clearAllMocks();
-
-        mockConfigService.get.mockImplementation((key) => {
-            if (key === 'jwt.secret') {
-                return 'test-secret-key';
-            }
-            return null;
-        });
 
         const moduleRef: TestingModule = await Test.createTestingModule({
             providers: [
@@ -35,8 +30,8 @@ describe('JwtStrategy', () => {
                     useValue: mockUserService,
                 },
                 {
-                    provide: ConfigService,
-                    useValue: mockConfigService,
+                    provide: appConfig.KEY,
+                    useValue: mockAppConfig,
                 },
             ],
         }).compile();
@@ -138,11 +133,7 @@ describe('JwtStrategy', () => {
             // Just verify the strategy was created successfully
             expect(jwtStrategy).toBeDefined();
 
-            // Verify that config service was used to get the secret during instantiation
-            expect(mockConfigService.get).toHaveBeenCalledWith('jwt.secret');
-
-            // Add test to validate JWT extraction method is configured
-            // We can't directly access JwtStrategy's options, but we can verify it's properly instantiated
+            // We can't directly check if the config was used, but we can verify it's properly instantiated
             // by testing its behavior in previous tests
         });
     });

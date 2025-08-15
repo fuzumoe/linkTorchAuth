@@ -33,7 +33,7 @@ export default registerAs('app', () => {
         isProduction: nodeEnv === 'production',
         isDevelopment: nodeEnv === 'development',
         isTest: nodeEnv === 'test',
-        jwtSecret: process.env.JWT_SECRET,
+        jwtSecret: process.env.JWT_SECRET || 'some-secrete',
         jwtExpiresIn: parseExpiresIn(process.env.JWT_EXPIRES_IN || '1d'),
         refreshTokenExpiresIn: parseExpiresIn(process.env.REFRESH_TOKEN_EXPIRES_IN || '7d'),
         cookies: {
