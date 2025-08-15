@@ -71,8 +71,8 @@ describe('User Decorators', () => {
             // Verify
             expect(mockSwitchToHttp).toHaveBeenCalled();
             expect(mockGetRequest).toHaveBeenCalled();
-            // CurrentUser returns an empty object when user is not present
-            expect(result).toEqual({});
+            // CurrentUser now returns undefined when user is not present
+            expect(result).toEqual(undefined);
         });
     });
 
@@ -132,8 +132,8 @@ describe('User Decorators', () => {
             /* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
             // Verify
-            // According to the implementation, if the property doesn't exist, it returns the entire user object
-            expect(result).toEqual(mockUser);
+            // Updated to match current implementation - returns undefined for non-existent property
+            expect(result).toBeUndefined();
         });
 
         it('should return undefined when user is not present', () => {

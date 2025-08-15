@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-assignment */
 import { TestingModule } from '@nestjs/testing';
-import { AuthService } from '../../../src/services/auth.service';
-import { Repository } from 'typeorm';
-import { User } from '../../../src/entities/user.entity';
-import { Response } from 'express';
-import { RefreshToken } from '../../../src/entities/refresh-token.entity';
-import { PasswordReset } from '../../../src/entities/password-reset.entity';
-import { EmailVerification } from '../../../src/entities/email-verification.entity';
-import { v4 as uuidv4 } from 'uuid';
-import { createTestingModule, cleanupTestUsers, createTestUser, getCommonServices } from '../../fixtures/app.fixtures';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { Response } from 'express';
+import { Repository } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
+import { EmailVerification } from '../../../src/entities/email-verification.entity';
+import { PasswordReset } from '../../../src/entities/password-reset.entity';
+import { RefreshToken } from '../../../src/entities/refresh-token.entity';
+import { User } from '../../../src/entities/user.entity';
+import { AuthService } from '../../../src/services/auth.service';
+import { cleanupTestUsers, createTestingModule, createTestUser, getCommonServices } from '../../fixtures/app.fixtures';
 
 describe('AuthService Integration', () => {
     let app: TestingModule;

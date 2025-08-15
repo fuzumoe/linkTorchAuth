@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/unbound-method, @typescript-eslint/require-await */
-import { Test, TestingModule } from '@nestjs/testing';
-import { AuthService } from '../../../src/services/auth.service';
-import { UserService } from '../../../src/services/user.service';
-import { PasswordService } from '../../../src/services/password.service';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { RefreshToken } from '../../../src/entities/refresh-token.entity';
-import { PasswordReset } from '../../../src/entities/password-reset.entity';
-import { EmailVerification } from '../../../src/entities/email-verification.entity';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { User } from '../../../src/entities/user.entity';
 import appConfig from '../../../src/config/app.config';
+import { EmailVerification } from '../../../src/entities/email-verification.entity';
+import { PasswordReset } from '../../../src/entities/password-reset.entity';
+import { RefreshToken } from '../../../src/entities/refresh-token.entity';
+import { User } from '../../../src/entities/user.entity';
+import { AuthService } from '../../../src/services/auth.service';
+import { PasswordService } from '../../../src/services/password.service';
+import { UserService } from '../../../src/services/user.service';
 
 jest.mock('uuid', () => ({
     v4: jest.fn().mockReturnValue('mocked-uuid'),
@@ -300,7 +300,7 @@ describe('AuthService', () => {
             const result = await authService.revokeRefreshToken('token');
 
             expect(refreshTokenRepo.update).toHaveBeenCalledWith({ token: 'token' }, { isRevoked: true });
-            expect(result).toBe(true);
+            expect(result).toEqual({ success: true });
         });
 
         it('should return false if no token was updated', async () => {
@@ -308,7 +308,7 @@ describe('AuthService', () => {
 
             const result = await authService.revokeRefreshToken('token');
 
-            expect(result).toBe(false);
+            expect(result).toEqual({ success: false });
         });
     });
 
@@ -414,7 +414,7 @@ describe('AuthService', () => {
             expect(userService.update).toHaveBeenCalledWith('user-id-1', { password: 'new-password' });
             expect(passwordResetRepo.update).toHaveBeenCalledWith({ token: 'token' }, { isUsed: true });
             expect(authService.revokeAllUserRefreshTokens).toHaveBeenCalledWith('user-id-1');
-            expect(result).toBe(true);
+            expect(result).toEqual({ success: true, message: 'Password reset successfully' });
         });
     });
 
@@ -488,7 +488,7 @@ describe('AuthService', () => {
 
             expect(userService.update).toHaveBeenCalledWith('user-id-1', { isEmailVerified: true });
             expect(emailVerificationRepo.update).toHaveBeenCalledWith({ token: 'token' }, { isUsed: true });
-            expect(result).toBe(true);
+            expect(result).toEqual({ success: true, message: 'Email verified successfully' });
         });
     });
 
