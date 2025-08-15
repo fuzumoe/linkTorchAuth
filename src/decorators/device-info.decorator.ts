@@ -16,8 +16,12 @@ export function getClientIp(req: Request): string {
 
     const socketRemoteAddress = req.socket?.remoteAddress;
 
+    const connectionRemoteAddress = req.connection?.remoteAddress;
+
     return normalizeIp(
-        (req.ip as string) || (typeof socketRemoteAddress === 'string' ? socketRemoteAddress : undefined)
+        (req.ip as string) ||
+            (typeof socketRemoteAddress === 'string' ? socketRemoteAddress : undefined) ||
+            (typeof connectionRemoteAddress === 'string' ? connectionRemoteAddress : undefined)
     );
 }
 
