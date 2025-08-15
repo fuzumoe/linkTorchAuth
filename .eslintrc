@@ -1,0 +1,8 @@
+{
+    "root": true,
+    "ignorePatterns": [
+        "**/node_modules/**",
+        ".eslintrc.js",
+        "eslint.config.mjs"
+    ]
+}
