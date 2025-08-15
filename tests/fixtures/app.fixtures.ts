@@ -1,34 +1,33 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { TypeOrmModule, getDataSourceToken } from '@nestjs/typeorm';
+import { INestApplication } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { Repository, Like } from 'typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { INestApplication } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { TypeOrmModule, getDataSourceToken } from '@nestjs/typeorm';
+import { Like, Repository } from 'typeorm';
 
-import { User } from '../../src/entities/user.entity';
-import { RefreshToken } from '../../src/entities/refresh-token.entity';
 import { AuditLog } from '../../src/entities/audit-log.entity';
 import { EmailVerification } from '../../src/entities/email-verification.entity';
 import { PasswordReset } from '../../src/entities/password-reset.entity';
-import { PasswordService } from '../../src/services/password.service';
+import { RefreshToken } from '../../src/entities/refresh-token.entity';
+import { User } from '../../src/entities/user.entity';
 import { AuthService } from '../../src/services/auth.service';
+import { PasswordService } from '../../src/services/password.service';
 import { UserService } from '../../src/services/user.service';
 import { BasicStrategy } from '../../src/strategies/basic.strategy';
-import { LocalStrategy } from '../../src/strategies/local.strategy';
 import { JwtStrategy } from '../../src/strategies/jwt.strategy';
+import { LocalStrategy } from '../../src/strategies/local.strategy';
 import { UserSubscriber } from '../../src/subscribers/user.subscriber';
 
-import databaseConfig from '../../src/config/database.config';
-import jwtConfig from '../../src/config/jwt.config';
 import appConfig from '../../src/config/app.config';
+import databaseConfig from '../../src/config/database.config';
 
 export async function createTestingModule(): Promise<TestingModule> {
     return await Test.createTestingModule({
         imports: [
             ConfigModule.forRoot({
                 isGlobal: true,
-                load: [databaseConfig, jwtConfig, appConfig],
+                load: [databaseConfig, appConfig],
                 envFilePath: ['.env'],
             }),
             PassportModule,
