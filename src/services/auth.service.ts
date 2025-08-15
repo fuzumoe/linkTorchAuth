@@ -1,13 +1,13 @@
-import { SuccessResponseDto } from '@auth/dtos/process.dto';
-import { JwtConfig } from '@auth/interfaces/jwt.interface';
-import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { BadRequestException, Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { ConfigService, ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Response } from 'express';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import appConfig from '../config/app.config';
+import { SuccessResponseDto } from '../dtos/process.dto';
 import { UserResponseDto } from '../dtos/user.dto';
 import { EmailVerification } from '../entities/email-verification.entity';
 import { PasswordReset } from '../entities/password-reset.entity';
@@ -19,22 +19,20 @@ import { UserService } from './user.service';
 @Injectable()
 export class AuthService {
     private readonly logger = new Logger(AuthService.name);
-    private readonly jwtConfig: JwtConfig | undefined;
 
     constructor(
         private readonly userService: UserService,
         private readonly passwordService: PasswordService,
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService,
+        @Inject(appConfig.KEY) private readonly appCfg: ConfigType<typeof appConfig>,
         @InjectRepository(RefreshToken)
         private readonly refreshTokenRepository: Repository<RefreshToken>,
         @InjectRepository(PasswordReset)
         private readonly passwordResetRepository: Repository<PasswordReset>,
         @InjectRepository(EmailVerification)
         private readonly emailVerificationRepository: Repository<EmailVerification>
-    ) {
-        this.jwtConfig = this.configService.get<JwtConfig>('jwt');
-    }
+    ) {}
 
     async validateCredentials(email: string, password: string): Promise<User | null> {
         this.logger.log(`Validating credentials for user: ${email}`);
@@ -76,17 +74,10 @@ export class AuthService {
             this.logger.log('Setting Authorization header and access_token cookie');
             response.setHeader('Authorization', `Bearer ${accessToken}`);
 
-            const jwtExpiresIn: string = this.jwtConfig?.expiresIn || '1h';
-            const expiresInMs = this.parseJwtExpiresIn(jwtExpiresIn);
+            const jwtExpiresIn: number = this.appCfg.jwtExpiresIn;
 
-            this.logger.log(`Setting access_token cookie with expiration: ${expiresInMs}ms`);
-            response.cookie('access_token', accessToken, {
-                path: this.configService.get<string>('app.cookies.path') ?? '/',
-                httpOnly: this.configService.get<boolean>('app.cookies.httpOnly') ?? true,
-                secure: this.configService.get<boolean>('app.cookies.secure') ?? false,
-                sameSite: this.configService.get<'strict' | 'lax' | 'none'>('app.cookies.sameSite') ?? 'strict',
-                maxAge: this.configService.get<number>('app.cookies.accessTokenMaxAge') ?? expiresInMs,
-            });
+            this.logger.log(`Setting access_token cookie with expiration: ${jwtExpiresIn}ms`);
+            response.cookie('access_token', accessToken, this.appCfg.cookies);
         } else {
             this.logger.log('No response object provided, skipping header and cookie setup');
         }
@@ -131,16 +122,7 @@ export class AuthService {
         }
 
         if (response) {
-            const refreshTokenExpiresIn: string = this.configService.get('REFRESH_TOKEN_EXPIRES_IN') || '30d';
-            const maxAge = this.parseJwtExpiresIn(refreshTokenExpiresIn);
-
-            response.cookie('refresh_token', token, {
-                path: this.configService.get<string>('app.cookies.path') ?? '/',
-                httpOnly: this.configService.get<boolean>('app.cookies.httpOnly') ?? true,
-                secure: this.configService.get<boolean>('app.cookies.secure') ?? false,
-                sameSite: this.configService.get<'strict' | 'lax' | 'none'>('app.cookies.sameSite') ?? 'strict',
-                maxAge: this.configService.get<number>('app.cookies.refreshTokenMaxAge') ?? maxAge,
-            });
+            response.cookie('refresh_token', token, this.appCfg.cookies);
         }
 
         return token;
@@ -197,16 +179,9 @@ export class AuthService {
             }
 
             if (response) {
-                const cookieOptions = {
-                    path: this.configService.get<string>('app.cookies.path') ?? '/',
-                    httpOnly: this.configService.get<boolean>('app.cookies.httpOnly') ?? true,
-                    secure: this.configService.get<boolean>('app.cookies.secure') ?? false,
-                    sameSite: this.configService.get<'strict' | 'lax' | 'none'>('app.cookies.sameSite') ?? 'strict',
-                };
-
-                response.clearCookie('access_token', cookieOptions);
-                response.clearCookie('refresh_token', cookieOptions);
-                response.clearCookie('authenticated', cookieOptions);
+                response.clearCookie('access_token', this.appCfg.cookies);
+                response.clearCookie('refresh_token', this.appCfg.cookies);
+                response.clearCookie('authenticated', this.appCfg.cookies);
 
                 this.logger.log('Cleared authentication cookies');
             }
@@ -324,23 +299,5 @@ export class AuthService {
         });
 
         return userResponse;
-    }
-
-    private parseJwtExpiresIn(expiresIn: string): number {
-        const unit = expiresIn.slice(-1);
-        const value = parseInt(expiresIn.slice(0, -1), 10);
-
-        switch (unit) {
-            case 's':
-                return value * 1000; // seconds to ms
-            case 'm':
-                return value * 60 * 1000; // minutes to ms
-            case 'h':
-                return value * 60 * 60 * 1000; // hours to ms
-            case 'd':
-                return value * 24 * 60 * 60 * 1000; // days to ms
-            default:
-                return 3600 * 1000; // default: 1 hour
-        }
     }
 }

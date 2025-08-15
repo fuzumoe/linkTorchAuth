@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/unbound-method, @typescript-eslint/require-await */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/unbound-method */
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -29,6 +29,14 @@ describe('AuthService', () => {
 
     const mockAppConfig = {
         isProduction: false,
+        jwtExpiresIn: 3600000, // 1 hour in ms
+        cookies: {
+            secure: false,
+            httpOnly: true,
+            sameSite: 'strict',
+            path: '/',
+            maxAge: 3600000, // 1 hour in ms
+        },
     };
 
     const mockUser = {
@@ -189,15 +197,7 @@ describe('AuthService', () => {
             await authService.login(mockUser as User, '127.0.0.1', 'Chrome', mockResponse as any);
 
             expect(mockResponse.setHeader).toHaveBeenCalledWith('Authorization', 'Bearer mocked-jwt-token');
-            expect(mockResponse.cookie).toHaveBeenCalledWith(
-                'access_token',
-                'mocked-jwt-token',
-                expect.objectContaining({
-                    httpOnly: true,
-                    sameSite: 'strict',
-                    maxAge: 3600000, // 1h in ms
-                })
-            );
+            expect(mockResponse.cookie).toHaveBeenCalledWith('access_token', 'mocked-jwt-token', mockAppConfig.cookies);
         });
     });
 
@@ -234,15 +234,7 @@ describe('AuthService', () => {
 
             await authService.createRefreshToken('user-id-1', 'Chrome', '127.0.0.1', mockResponse as any);
 
-            expect(mockResponse.cookie).toHaveBeenCalledWith(
-                'refresh_token',
-                'mocked-uuid',
-                expect.objectContaining({
-                    httpOnly: true,
-                    sameSite: 'strict',
-                    maxAge: 30 * 24 * 60 * 60 * 1000, // 30d in ms
-                })
-            );
+            expect(mockResponse.cookie).toHaveBeenCalledWith('refresh_token', 'mocked-uuid', mockAppConfig.cookies);
         });
     });
 
@@ -489,39 +481,6 @@ describe('AuthService', () => {
             expect(userService.update).toHaveBeenCalledWith('user-id-1', { isEmailVerified: true });
             expect(emailVerificationRepo.update).toHaveBeenCalledWith({ token: 'token' }, { isUsed: true });
             expect(result).toEqual({ success: true, message: 'Email verified successfully' });
-        });
-    });
-
-    describe('parseJwtExpiresIn', () => {
-        it('should convert seconds to milliseconds', async () => {
-            // Access the private method using any type cast
-            const result = (authService as any).parseJwtExpiresIn('30s');
-            expect(result).toBe(30 * 1000);
-        });
-
-        it('should convert minutes to milliseconds', async () => {
-            const result = (authService as any).parseJwtExpiresIn('5m');
-            expect(result).toBe(5 * 60 * 1000);
-        });
-
-        it('should convert hours to milliseconds', async () => {
-            const result = (authService as any).parseJwtExpiresIn('2h');
-            expect(result).toBe(2 * 60 * 60 * 1000);
-        });
-
-        it('should convert days to milliseconds', async () => {
-            const result = (authService as any).parseJwtExpiresIn('7d');
-            expect(result).toBe(7 * 24 * 60 * 60 * 1000);
-        });
-
-        it('should return default value for invalid format', async () => {
-            // For this test, we'll use a format that has a valid unit but NaN value
-            const result = (authService as any).parseJwtExpiresIn('abch');
-            expect(result).toBe(NaN * 60 * 60 * 1000); // This evaluates to NaN
-
-            // Let's add another test for a completely different format
-            const result2 = (authService as any).parseJwtExpiresIn('1y'); // y is not a valid unit
-            expect(result2).toBe(3600 * 1000); // 1 hour default
         });
     });
 
