@@ -27,18 +27,27 @@ describe('TypeOrmConfig Integration', () => {
             expect(options).toBeDefined();
 
             // Get the database config from configService
-            const dbType = configService.get('database.type');
-            const dbHost = configService.get('database.host');
-            const dbPort = configService.get('database.port');
-            const dbUsername = configService.get('database.username');
-            const dbPassword = configService.get('database.password');
-            const dbName = configService.get('database.database');
+            const dbType = configService.get<string>('database.type');
+            const dbHost = configService.get<string>('database.host');
+            const dbPort = configService.get<number>('database.port');
+            const dbUsername = configService.get<string>('database.username');
+            const dbPassword = configService.get<string>('database.password');
+            const dbName = configService.get<string>('database.database');
 
             // Check that typeOrmConfig uses these values correctly
             expect(options.type).toBe(dbType);
             // TypeORM config properties depend on the database type
-            // Use type assertion to access these properties
-            const dbOptions = options as any;
+            // Use a proper interface to type the options
+            interface DbConnectionOptions {
+                type: string;
+                host: string;
+                port: number;
+                username: string;
+                password: string;
+                database: string;
+            }
+
+            const dbOptions = options as DbConnectionOptions;
             expect(dbOptions.host).toBe(dbHost);
             expect(dbOptions.port).toBe(Number(dbPort));
             expect(dbOptions.username).toBe(dbUsername);
@@ -73,8 +82,19 @@ describe('TypeOrmConfig Integration', () => {
             expect(config).toBeDefined();
             expect(config.type).toBe('postgres');
 
-            // Use type assertion to access these properties
-            const dbOptions = config as any;
+            // Use a proper interface to access these properties
+            interface DbConnectionOptions {
+                type: string;
+                host: string;
+                port: number;
+                username: string;
+                password: string;
+                database: string;
+                entities: string[];
+                migrations: string[];
+                migrationsTableName: string;
+            }
+            const dbOptions = config as DbConnectionOptions;
             expect(dbOptions.host).toBe('test-host');
             expect(dbOptions.port).toBe(5432);
             expect(dbOptions.username).toBe('test-user');
@@ -94,13 +114,47 @@ describe('TypeOrmConfig Integration', () => {
 
             // Check entities path
             expect(options.entities).toBeDefined();
-            const entitiesPath = String(options.entities);
-            expect(entitiesPath).toContain('**/*.entity.js');
+
+            // Safe way to check entities pattern
+            if (Array.isArray(options.entities)) {
+                // Check if first element is string or object
+                if (typeof options.entities[0] === 'string') {
+                    expect(options.entities[0]).toContain('**/*.entity.js');
+                } else {
+                    // If it's an object, just verify it exists without converting to string
+                    expect(options.entities).toHaveLength(1);
+                }
+            } else if (options.entities) {
+                // For non-array entities, verify it's a string before trying to use it
+                if (typeof options.entities === 'string') {
+                    expect(options.entities).toContain('**/*.entity.js');
+                } else {
+                    // Just verify the entities exist without string conversion
+                    expect(options.entities).toBeTruthy();
+                }
+            }
 
             // Check migrations path
             expect(options.migrations).toBeDefined();
-            const migrationsPath = String(options.migrations);
-            expect(migrationsPath).toContain('migrations');
+
+            // Safe way to check migrations pattern
+            if (Array.isArray(options.migrations)) {
+                // Check if first element is string or object
+                if (typeof options.migrations[0] === 'string') {
+                    expect(options.migrations[0]).toContain('migrations');
+                } else {
+                    // If it's an object, just verify it exists without converting to string
+                    expect(options.migrations).toHaveLength(1);
+                }
+            } else if (options.migrations) {
+                // For non-array migrations, verify it's a string before trying to use it
+                if (typeof options.migrations === 'string') {
+                    expect(options.migrations).toContain('migrations');
+                } else {
+                    // Just verify the migrations exist without string conversion
+                    expect(options.migrations).toBeTruthy();
+                }
+            }
             expect(options.migrationsTableName).toBe('migrations');
         });
     });

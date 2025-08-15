@@ -32,12 +32,12 @@ describe('Database Config Integration', () => {
     describe('ConfigService with database.config integration', () => {
         it('should load database config values through ConfigService', () => {
             // Access database config through the config service using the namespace
-            const dbType = configService.get('database.type');
-            const dbHost = configService.get('database.host');
-            const dbPort = configService.get('database.port');
-            const dbUsername = configService.get('database.username');
-            const dbPassword = configService.get('database.password');
-            const dbName = configService.get('database.database');
+            const dbType = configService.get<string>('database.type');
+            const dbHost = configService.get<string>('database.host');
+            const dbPort = configService.get<number>('database.port');
+            const dbUsername = configService.get<string>('database.username');
+            const dbPassword = configService.get<string>('database.password');
+            const dbName = configService.get<string>('database.database');
 
             // Verify the values match what we expect
             expect(dbType).toBeDefined();
@@ -54,11 +54,11 @@ describe('Database Config Integration', () => {
             expect(dataSource.isInitialized).toBe(true);
             expect(dataSource.options).toEqual(
                 expect.objectContaining({
-                    type: configService.get('database.type'),
-                    host: configService.get('database.host'),
-                    port: configService.get('database.port'),
-                    username: configService.get('database.username'),
-                    database: configService.get('database.database'),
+                    type: configService.get<string>('database.type'),
+                    host: configService.get<string>('database.host'),
+                    port: configService.get<number>('database.port'),
+                    username: configService.get<string>('database.username'),
+                    database: configService.get<string>('database.database'),
                 })
             );
         });
@@ -134,7 +134,7 @@ describe('Database Config Integration', () => {
     describe('Database connection integration', () => {
         it('should successfully connect to the database with provided config', async () => {
             // Check if we can perform a simple query with our connection
-            const result = await dataSource.query('SELECT 1 as value');
+            const result = await dataSource.query<Array<{ value: number }>>('SELECT 1 as value');
             expect(result).toEqual([{ value: 1 }]);
         });
     });
@@ -142,12 +142,22 @@ describe('Database Config Integration', () => {
     describe('TypeORM integration', () => {
         it('should properly map config values to TypeORM connection options', () => {
             // Verify that TypeORM connection options match our config
-            const dbOptions = dataSource.options as any;
+            // Use a specific interface to type the options
+            interface DbConnectionOptions {
+                type: string;
+                host: string;
+                port: number;
+                username: string;
+                password: string;
+                database: string;
+            }
+
+            const dbOptions = dataSource.options as DbConnectionOptions;
 
             // Type assertion is needed because TypeORM's DataSourceOptions is a union type
             // and TypeScript can't determine which specific connection options are being used
-            expect(dbOptions.type).toBe(configService.get('database.type'));
-            expect(dbOptions.host).toBe(configService.get('database.host'));
+            expect(dbOptions.type).toBe(configService.get<string>('database.type'));
+            expect(dbOptions.host).toBe(configService.get<string>('database.host'));
             expect(dbOptions.port).toBe(configService.get('database.port'));
             expect(dbOptions.username).toBe(configService.get('database.username'));
             expect(dbOptions.password).toBe(configService.get('database.password'));

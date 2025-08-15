@@ -11,3 +11,15 @@ declare type DatabaseType =
     | 'react-native'
     | 'sqljs'
     | 'mongodb';
+
+declare type CookieSameSitePolicy = 'strict' | 'lax' | 'none';
+
+declare type CookieOptions = {
+    secure: boolean;
+    accessTokenMaxAge: number;
+    refreshTokenMaxAge: number;
+    path: string;
+    httpOnly: boolean;
+    sameSite: CookieSameSitePolicy;
+    maxAge: number;
+};

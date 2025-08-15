@@ -46,8 +46,8 @@ describe('Environment Validation Integration', () => {
 
         it('should correctly handle numeric values', () => {
             // Verify that numeric values are properly handled
-            const appPort = configService.get('APP_PORT');
-            const dbPort = configService.get('DATABASE_PORT');
+            const appPort = configService.get<number | string>('APP_PORT');
+            const dbPort = configService.get<number | string>('DATABASE_PORT');
 
             // ConfigService may return numbers as strings in some cases
             expect(Number(appPort)).toBeGreaterThanOrEqual(3000); // Minimum value constraint

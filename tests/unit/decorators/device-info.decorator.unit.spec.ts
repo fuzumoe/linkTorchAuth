@@ -1,6 +1,6 @@
 import { ExecutionContext } from '@nestjs/common';
-import { normalizeIp, getClientIp } from '../../../src/decorators/device-info.decorator';
 import { Request } from 'express';
+import { getClientIp, normalizeIp } from '../../../src/decorators/device-info.decorator';
 
 // Mock the @nestjs/common module
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return */
@@ -109,7 +109,7 @@ describe('Device Info Decorators', () => {
         it('should fall back to req.connection.remoteAddress if other sources are not available', () => {
             const mockReq = {
                 headers: {},
-                connection: { remoteAddress: '192.168.1.1' },
+                socket: { remoteAddress: '192.168.1.1' },
             } as unknown as Request;
             expect(getClientIp(mockReq)).toBe('192.168.1.1');
         });

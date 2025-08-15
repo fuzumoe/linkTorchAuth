@@ -1,18 +1,27 @@
 import { EnvValidationSchema } from '../../../src/config/env.validation';
 
 describe('EnvValidationSchema', () => {
-    const validateEnv = (env: Record<string, any>) => {
+    // Define type for Joi validation result
+    interface ValidationResult {
+        value: Record<string, unknown>;
+        error?: {
+            details: Array<{
+                path: string[];
+                [key: string]: unknown;
+            }>;
+        };
+    }
+
+    const validateEnv = (env: Record<string, unknown>): ValidationResult => {
         const result = EnvValidationSchema.validate(env, {
             abortEarly: false,
             allowUnknown: true,
-        });
+        }) as ValidationResult;
         return result;
     };
 
-    const hasErrorForPath = (error: any, path: string): boolean => {
-        return (
-            error && error.details && error.details.some((d: any) => d.path && d.path.includes && d.path.includes(path))
-        );
+    const hasErrorForPath = (error: ValidationResult['error'] | undefined, path: string): boolean => {
+        return Boolean(error?.details?.some((d) => Array.isArray(d.path) && d.path.includes(path)));
     };
 
     describe('required fields', () => {
@@ -154,7 +163,8 @@ describe('EnvValidationSchema', () => {
                 JWT_SECRET: 'a-very-long-secret-that-is-at-least-32-chars',
             };
 
-            const { value, error } = validateEnv(minimalEnv);
+            const result = validateEnv(minimalEnv);
+            const { value, error } = result;
 
             expect(error).toBeUndefined();
             expect(value).toEqual(
@@ -184,7 +194,8 @@ describe('EnvValidationSchema', () => {
                 DATABASE_HOST: 'custom-host',
             };
 
-            const { value, error } = validateEnv(customEnv);
+            const result = validateEnv(customEnv);
+            const { value, error } = result;
 
             expect(error).toBeUndefined();
             expect(value).toEqual(
@@ -220,7 +231,8 @@ describe('EnvValidationSchema', () => {
                 JWT_EXPIRES_IN: '2h',
             };
 
-            const { value, error } = validateEnv(fullEnv);
+            const result = validateEnv(fullEnv);
+            const { value, error } = result;
 
             expect(error).toBeUndefined();
             expect(value).toEqual(expect.objectContaining(fullEnv));

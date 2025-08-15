@@ -28,10 +28,10 @@ describe('App Config Integration', () => {
     describe('ConfigService with app.config integration', () => {
         it('should load app config values through ConfigService', () => {
             // Access app config through the config service using the namespace
-            const appName = configService.get('app.appName');
-            const apiBasePrefix = configService.get('app.apiBasePrefix');
-            const apiVersion = configService.get('app.apiVersion');
-            const cookies = configService.get('app.cookies');
+            const appName = configService.get<string>('app.appName');
+            const apiBasePrefix = configService.get<string>('app.apiBasePrefix');
+            const apiVersion = configService.get<string>('app.apiVersion');
+            const cookies = configService.get<Record<string, unknown>>('app.cookies');
 
             // Verify the values match what we expect from default config
             expect(appName).toBeDefined();
@@ -47,9 +47,9 @@ describe('App Config Integration', () => {
 
         it('should detect environment mode correctly', () => {
             // Access environment mode flags
-            const isProduction = configService.get('app.isProduction');
-            const isDevelopment = configService.get('app.isDevelopment');
-            const isTest = configService.get('app.isTest');
+            const isProduction = configService.get<boolean>('app.isProduction');
+            const isDevelopment = configService.get<boolean>('app.isDevelopment');
+            const isTest = configService.get<boolean>('app.isTest');
 
             // In test environment NODE_ENV should be 'test'
             expect(isProduction).toBe(false);

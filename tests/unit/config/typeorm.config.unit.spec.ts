@@ -68,7 +68,11 @@ describe('TypeOrmConfig', () => {
 
         jest.spyOn(configService, 'get').mockReturnValue(mockDbConfig);
 
+        // Store the original function first to avoid lint errors
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         const originalCwd = process.cwd;
+
+        // Replace with mock function
         process.cwd = jest.fn().mockReturnValue('/test/path');
 
         try {

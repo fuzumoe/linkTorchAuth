@@ -1,6 +1,6 @@
-import { DataSource } from 'typeorm';
-import * as dotenvExpand from 'dotenv-expand';
 import * as dotenv from 'dotenv';
+import * as dotenvExpand from 'dotenv-expand';
+import { DataSource } from 'typeorm';
 import databaseConfig from '../config/database.config';
 
 dotenvExpand.expand(dotenv.config());
