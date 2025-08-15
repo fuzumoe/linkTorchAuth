@@ -1,19 +1,19 @@
-import { Injectable, Logger, UnauthorizedException, BadRequestException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { JwtConfig } from '@auth/interfaces/jwt.interface';
+import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { plainToInstance } from 'class-transformer';
 import { Response } from 'express';
-import { User } from '../entities/user.entity';
-import { UserService } from './user.service';
-import { PasswordService } from './password.service';
-import { RefreshToken } from '../entities/refresh-token.entity';
-import { PasswordReset } from '../entities/password-reset.entity';
-import { EmailVerification } from '../entities/email-verification.entity';
+import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { UserResponseDto } from '../dtos/user.dto';
-import { plainToInstance } from 'class-transformer';
-import { JwtConfig } from '@auth/interfaces/jwt.interface';
+import { EmailVerification } from '../entities/email-verification.entity';
+import { PasswordReset } from '../entities/password-reset.entity';
+import { RefreshToken } from '../entities/refresh-token.entity';
+import { User } from '../entities/user.entity';
+import { PasswordService } from './password.service';
+import { UserService } from './user.service';
 
 @Injectable()
 export class AuthService {
